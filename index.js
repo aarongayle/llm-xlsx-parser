@@ -1,81 +1,54 @@
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import fs, { readFileSync, writeFileSync } from "fs";
+import fs from "fs";
 import path from "path";
 import { read, utils } from "xlsx";
 import { createImageFromXlsx } from "./create-image.js";
 
 dotenv.config();
-// Initialize Gemini AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Read the Excel file
-const workbook = read(readFileSync("examples/LOS.xlsx"));
+// Default system prompt embedded in the module
+const DEFAULT_SYSTEM_PROMPT = `You are a serialization engineer. Your role is to take multiple forms of the same data (CSV, JSON, and visual image) and analyze them to create the most comprehensive understanding possible. 
 
-// Get the first sheet name
-const firstSheetName = workbook.SheetNames[0];
-console.log(`Reading sheet: ${firstSheetName}`);
+You excel at:
+1. Reading information from top to bottom rather than side to side
+2. Recognizing patterns in repeating record structures
+3. Understanding column relationships even in large datasets
+4. Combining visual, structured, and raw data insights
 
-// Get the first sheet
-const worksheet = workbook.Sheets[firstSheetName];
+You will output the data in a format that is easiest for LLMs to understand.
 
-// Convert to CSV format
-const csvData = utils.sheet_to_csv(worksheet);
+For example let's say have a table like:
 
-// Save CSV to file
-writeFileSync("./output/output.csv", csvData);
-console.log("CSV saved to output.csv");
+| name  | age | favorite color |
+| ----- | —-- | —------------- |
+| Steve | 56  | red            |
+| Ava   | 1   | pink           |
+| Donna | 50  | purple         |
 
-// Also convert to JSON for easier processing
-const jsonData = utils.sheet_to_json(worksheet, {
-  header: 1, // Use first row as header
-  defval: "", // Default value for empty cells
-});
+The way you want to present the information to the model is as:
 
-// Save JSON to file
-writeFileSync("./output/output.json", JSON.stringify(jsonData, null, 2));
-console.log("JSON saved to output.json");
+\`\`\`
+name: Steve
+age: 56
+favorite color: red
 
-// Display some info about the data
-console.log(`\nSheet info:`);
-console.log(`- Sheet name: ${firstSheetName}`);
-console.log(`- Total rows: ${jsonData.length}`);
-console.log(`- Total columns: ${jsonData[0]?.length || 0}`);
+name: Ava
+age: 1
+favorite color: pink
 
-// Show first few rows
-console.log("\nFirst 5 rows:");
-jsonData.slice(0, 5).forEach((row, index) => {
-  console.log(`Row ${index + 1}:`, row.slice(0, 5), "...");
-});
+name: Donna
+age: 50
+favorite color: purple
+\`\`\`
 
-// NEW: Convert XLSX to image
-console.log("\n🖼️  Converting XLSX to image...");
-let imagePath;
-try {
-  imagePath = await createImageFromXlsx(
-    "examples/LOS.xlsx",
-    "./output/spreadsheet.png",
-    {
-      maxRows: 50,
-      maxCols: 40,
-      fontSize: 8,
-      cellPadding: 2,
-      viewportWidth: 1920,
-      viewportHeight: 1080,
-      fullPage: true,
-    }
-  );
-  console.log(`✅ Image saved to: ${imagePath}`);
-  console.log("\n📋 Summary:");
-  console.log("- CSV: output.csv");
-  console.log("- JSON: output.json");
-  console.log(`- Image: ${imagePath}`);
-  console.log("\n💡 The image can now be sent to an LLM for visual analysis!");
-} catch (error) {
-  console.error("❌ Failed to convert XLSX to image:", error.message);
-}
+You do not need to include any insites or observations about the data. Your job only involves analysis so far as it is helpful to understand the spacial relationsip between data in rows and columns.`;
 
-// Function to convert tabular data to record format for better LLM understanding
+/**
+ * Function to convert tabular data to record format for better LLM understanding
+ * @param {Array} jsonData - Array of arrays representing the spreadsheet data
+ * @returns {string} Formatted record data
+ */
 function formatAsRecords(jsonData) {
   if (!jsonData || jsonData.length === 0) return "";
 
@@ -94,51 +67,130 @@ function formatAsRecords(jsonData) {
     .join("\n\n");
 }
 
-// NEW: Send all outputs to Gemini for analysis
-console.log("\n🤖 Sending data to Gemini for analysis...");
-try {
-  // Upload the image file
-  const myfile = await ai.files.upload({
-    file: path.resolve(imagePath),
-    config: { mimeType: "image/png" },
-  });
-  console.log("✅ Image uploaded to Gemini");
+/**
+ * Main function to analyze XLSX files using LLM
+ * @param {string} xlsxPath - Path to the XLSX file
+ * @param {string} outputPath - Path where the analysis will be saved
+ * @param {Object} options - Configuration options
+ * @param {number} [options.maxRows=50] - Maximum rows to process for image
+ * @param {number} [options.maxCols=40] - Maximum columns to process for image
+ * @param {number} [options.viewportWidth=1920] - Browser viewport width for image generation
+ * @param {number} [options.viewportHeight=1080] - Browser viewport height for image generation
+ * @param {number} [options.fontSize=8] - Font size for image generation
+ * @param {number} [options.cellPadding=2] - Cell padding for image generation
+ * @param {boolean} [options.fullPage=true] - Whether to capture full page for image
+ * @param {string} [options.systemPrompt] - Custom system prompt for LLM analysis
+ * @param {string} [options.geminiApiKey] - Gemini API key (if not in environment)
+ * @returns {Promise<string>} The analysis result text
+ */
+async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
+  const {
+    maxRows = 50,
+    maxCols = 40,
+    viewportWidth = 1920,
+    viewportHeight = 1080,
+    fontSize = 8,
+    cellPadding = 2,
+    fullPage = true,
+    systemPrompt = DEFAULT_SYSTEM_PROMPT,
+    geminiApiKey = process.env.GEMINI_API_KEY,
+  } = options;
 
-  // Format the data as records for better LLM understanding
-  const recordFormattedData = formatAsRecords(jsonData);
+  if (!geminiApiKey) {
+    throw new Error(
+      "Gemini API key is required. Set GEMINI_API_KEY environment variable or pass it in options."
+    );
+  }
 
-  // System prompt for serialization engineer
-  const systemPrompt = fs.readFileSync("./system-prompt.txt", "utf8");
+  // Initialize Gemini AI
+  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-  // Create the content for Gemini
-  const textContent = [
-    "**SPREADSHEET DATA (Record Format):**\n" + recordFormattedData,
-    "\n\n**CSV DATA:**\n" + csvData,
-    "\n\n**REQUEST:**\nPlease analyze this spreadsheet data in all its forms (visual image, structured records, and raw CSV). Provide insights about:\n1. The structure and content of the data\n2. Any patterns or relationships you notice\n3. Data quality observations\n4. Key insights or summaries\n5. Any recommendations for data processing or analysis",
-  ].join("");
+  try {
+    // Read the Excel file
+    const workbook = read(fs.readFileSync(xlsxPath));
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
 
-  const result = await ai.models.generateContent({
-    model: "gemini-2.5-pro",
-    contents: [
-      {
-        parts: [
-          { fileData: { mimeType: myfile.mimeType, fileUri: myfile.uri } },
-          { text: textContent },
-        ],
+    // Convert to CSV format
+    const csvData = utils.sheet_to_csv(worksheet);
+
+    // Convert to JSON for processing
+    const jsonData = utils.sheet_to_json(worksheet, {
+      header: 1, // Use first row as header
+      defval: "", // Default value for empty cells
+    });
+
+    // Create temporary image for LLM analysis
+    const tempImagePath = path.join(
+      path.dirname(outputPath),
+      `temp-${Date.now()}.png`
+    );
+
+    console.log("🖼️  Converting XLSX to image...");
+    const imagePath = await createImageFromXlsx(xlsxPath, tempImagePath, {
+      maxRows,
+      maxCols,
+      fontSize,
+      cellPadding,
+      viewportWidth,
+      viewportHeight,
+      fullPage,
+    });
+
+    console.log("🤖 Sending data to Gemini for analysis...");
+
+    // Upload the image file
+    const myfile = await ai.files.upload({
+      file: path.resolve(imagePath),
+      config: { mimeType: "image/png" },
+    });
+
+    // Format the data as records for better LLM understanding
+    const recordFormattedData = formatAsRecords(jsonData);
+
+    // Create the content for Gemini
+    const textContent = [
+      "**SPREADSHEET DATA (Record Format):**\n" + recordFormattedData,
+      "\n\n**CSV DATA:**\n" + csvData,
+      "\n\n**REQUEST:**\nPlease analyze this spreadsheet data in all its forms (visual image, structured records, and raw CSV). Provide insights about:\n1. The structure and content of the data\n2. Any patterns or relationships you notice\n3. Data quality observations\n4. Key insights or summaries\n5. Any recommendations for data processing or analysis",
+    ].join("");
+
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: [
+        {
+          parts: [
+            { fileData: { mimeType: myfile.mimeType, fileUri: myfile.uri } },
+            { text: textContent },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: systemPrompt,
+        temperature: 0,
       },
-    ],
-    config: {
-      systemInstruction: systemPrompt,
-    },
-  });
+    });
 
-  console.log("\n🎯 Gemini Analysis Results:");
-  console.log("=".repeat(50));
-  console.log(result.text);
-  fs.writeFileSync("./output/output.txt", result.text);
-} catch (error) {
-  console.error("❌ Failed to analyze with Gemini:", error.message);
-  console.error(
-    "Make sure GEMINI_API_KEY is set in your environment variables"
-  );
+    const analysisText = result.text;
+
+    // Save the analysis to the output file
+    fs.writeFileSync(outputPath, analysisText);
+
+    // Clean up temporary image file
+    try {
+      fs.unlinkSync(imagePath);
+    } catch (cleanupError) {
+      console.warn(
+        `⚠️  Could not clean up temporary image file: ${cleanupError.message}`
+      );
+    }
+
+    console.log(`✅ Analysis saved to: ${outputPath}`);
+    return analysisText;
+  } catch (error) {
+    console.error("❌ Failed to analyze XLSX:", error.message);
+    throw error;
+  }
 }
+
+export default analyzeXlsx;

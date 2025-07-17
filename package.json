@@ -1,22 +1,29 @@
 {
   "name": "llm-xlsx-parser",
   "type": "module",
-  "version": "1.0.0",
-  "description": "Convert XLSX files to images for LLM processing",
+  "version": "0.1.0",
+  "description": "Convert XLSX files into LLM-friendly formats with visual, CSV, and structured record processing",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "image": "node xlsx-to-image.js",
-    "create-image": "node create-image.js",
-    "demo": "node llm-image-demo.js"
+    "example": "node example.js"
   },
   "keywords": [
     "xlsx",
-    "image",
+    "excel",
     "llm",
-    "canvas",
-    "conversion"
+    "ai",
+    "analysis",
+    "gemini",
+    "image",
+    "conversion",
+    "spreadsheet"
   ],
   "author": "",
   "license": "ISC",
@@ -25,6 +32,7 @@
     "@google/genai": "^1.10.0",
     "canvas": "^2.11.2",
     "dotenv": "^17.2.0",
+    "playwright": "^1.40.0",
     "xlsx": "^0.18.5"
   }
 }
