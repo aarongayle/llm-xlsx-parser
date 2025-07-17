@@ -1,7 +1,7 @@
 {
   "name": "llm-xlsx-parser",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Convert XLSX files into LLM-friendly formats with visual, CSV, and structured record processing",
   "main": "index.js",
   "exports": {
@@ -15,7 +15,8 @@
     "test:run": "vitest run",
     "test:validate": "node test/validate-specific-values.js",
     "test:demo": "node test/demo.js",
-    "example": "node example.js"
+    "example": "node example.js",
+    "postinstall": "playwright install chromium"
   },
   "keywords": [
     "xlsx",

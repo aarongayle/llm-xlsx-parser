@@ -1,9 +1,7 @@
-import { exec } from "child_process";
+import path from "path";
+import { chromium } from "playwright";
 import { fileURLToPath } from "url";
-import { promisify } from "util";
 import { convertXlsxToImage } from "./xlsx-to-image.js";
-
-const execAsync = promisify(exec);
 
 /**
  * Converts XLSX to image with full automation
@@ -16,6 +14,8 @@ async function createImageFromXlsx(
   imagePath = "output.png",
   options = {}
 ) {
+  let browser;
+
   try {
     console.log("🚀 XLSX to Image Converter (Automated)");
     console.log("=".repeat(50));
@@ -36,29 +36,45 @@ async function createImageFromXlsx(
       htmlOptions
     );
 
-    // Step 2: Convert HTML to PNG using Playwright with proper viewport
+    // Step 2: Convert HTML to PNG using Playwright programmatically
     console.log("\n📸 Step 2: Converting HTML to PNG...");
     console.log(
       `📏 Using viewport: ${viewportWidth}x${viewportHeight}, Full page: ${fullPage}`
     );
 
-    const playwrightCmd = [
-      "npx playwright screenshot",
-      `--viewport-size=${viewportWidth},${viewportHeight}`,
-      fullPage ? "--full-page" : "",
-      `"${htmlPath}"`,
-      `"${imagePath}"`,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    // Launch browser
+    console.log("🔧 Launching browser...");
+    browser = await chromium.launch({
+      headless: true,
+    });
 
-    console.log(`🔧 Running: ${playwrightCmd}`);
+    const context = await browser.newContext({
+      viewport: {
+        width: viewportWidth,
+        height: viewportHeight,
+      },
+    });
 
-    const { stdout, stderr } = await execAsync(playwrightCmd);
+    const page = await context.newPage();
 
-    if (stderr && !stderr.includes("Navigating to")) {
-      console.warn("⚠️  Playwright warning:", stderr);
-    }
+    // Navigate to the HTML file
+    const fileUrl = `file://${path.resolve(htmlPath)}`;
+    console.log(`🌐 Navigating to: ${fileUrl}`);
+    await page.goto(fileUrl);
+
+    // Wait for the page to load completely
+    await page.waitForLoadState("networkidle");
+
+    // Take screenshot
+    console.log(`📸 Taking screenshot...`);
+    await page.screenshot({
+      path: imagePath,
+      fullPage: fullPage,
+    });
+
+    // Close browser
+    await browser.close();
+    browser = null;
 
     console.log(`✅ Image created successfully: ${imagePath}`);
 
@@ -83,10 +99,24 @@ async function createImageFromXlsx(
   } catch (error) {
     console.error(`❌ Error: ${error.message}`);
 
+    // Clean up browser if it's still open
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.warn(`⚠️  Could not close browser: ${closeError.message}`);
+      }
+    }
+
     // Check if it's a Playwright issue
-    if (error.message.includes("playwright")) {
-      console.log("\n🔧 To fix Playwright issues, run:");
+    if (
+      error.message.includes("playwright") ||
+      error.message.includes("browser")
+    ) {
+      console.log("\n🔧 To fix Playwright issues, try:");
       console.log("   npx playwright install");
+      console.log("   or");
+      console.log("   npx playwright install chromium");
     }
 
     throw error;

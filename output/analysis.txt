@@ -22,10 +22,10 @@ OPEX: Other Non-Op: -74644
 OPEX: Processing Fees: -62967
 OPEX: Water Disposal: -7034
 OPEX: Taxes: -212331
-OPEX: Wellwork: 0
+OPEX: Wellwork: 
 TOTAL CASH OPEX: -397812
 NET TO WI: 1492932
-TOTAL INVESTMENT: 0
+TOTAL INVESTMENT: 
 
 Period: 2022 Q2
 VOLUMES: Crude & Condensate (BBL): 2260
@@ -51,10 +51,10 @@ OPEX: Other Non-Op: -67246
 OPEX: Processing Fees: -58203
 OPEX: Water Disposal: -5764
 OPEX: Taxes: -257397
-OPEX: Wellwork: 0
+OPEX: Wellwork: 
 TOTAL CASH OPEX: -425861
 NET TO WI: 1855968
-TOTAL INVESTMENT: 0
+TOTAL INVESTMENT: 
 
 Period: 2022 Q3
 VOLUMES: Crude & Condensate (BBL): 1865
@@ -80,17 +80,17 @@ OPEX: Other Non-Op: -87458
 OPEX: Processing Fees: -62839
 OPEX: Water Disposal: -9039
 OPEX: Taxes: -265275
-OPEX: Wellwork: 0
+OPEX: Wellwork: 
 TOTAL CASH OPEX: -463368
 NET TO WI: 1843238
-TOTAL INVESTMENT: 0
+TOTAL INVESTMENT: 
 
 Period: 2022 Q4
 VOLUMES: Crude & Condensate (BBL): 1786
 VOLUMES: Gas (KCF): 218721
 VOLUMES: Natural Gas Liquids (BBL): 4007
 PRICES: Crude & Condensate ($/BBL): 86.15
-PRICES: Gas ($/KCF): 15.80
+PRICES: Gas ($/KCF): 15.8
 PRICES: Natural Gas Liquids ($/BBL): 35.58
 REVENUE: Crude & Condensate: 153831
 REVENUE: Gas: 3456005
@@ -109,10 +109,10 @@ OPEX: Other Non-Op: -57492
 OPEX: Processing Fees: -47531
 OPEX: Water Disposal: -16495
 OPEX: Taxes: -406141
-OPEX: Wellwork: 0
+OPEX: Wellwork: 
 TOTAL CASH OPEX: -560395
 NET TO WI: 2882928
-TOTAL INVESTMENT: 0
+TOTAL INVESTMENT: 
 
 Period: 2023 Q1
 VOLUMES: Crude & Condensate (BBL): 1254
@@ -138,16 +138,16 @@ OPEX: Other Non-Op: -76889
 OPEX: Processing Fees: -55052
 OPEX: Water Disposal: -13396
 OPEX: Taxes: -255049
-OPEX: Wellwork: 0
-TOTAL CASH OPEX: -454862
-NET TO WI: 1730478
+OPEX: Wellwork: 
+TOTAL CASH OPEX: -454862.47
+NET TO WI: 1730477.53
 TOTAL INVESTMENT: 6584
 
 Period: 2023 Q2
 VOLUMES: Crude & Condensate (BBL): 1702
 VOLUMES: Gas (KCF): 224366
 VOLUMES: Natural Gas Liquids (BBL): 5591
-PRICES: Crude & Condensate ($/BBL): 77.10
+PRICES: Crude & Condensate ($/BBL): 77.1
 PRICES: Gas ($/KCF): 2.98
 PRICES: Natural Gas Liquids ($/BBL): 26.98
 REVENUE: Crude & Condensate: 131251
@@ -177,7 +177,7 @@ VOLUMES: Crude & Condensate (BBL): 2174
 VOLUMES: Gas (KCF): 263160
 VOLUMES: Natural Gas Liquids (BBL): 7760
 PRICES: Crude & Condensate ($/BBL): 85.71
-PRICES: Gas ($/KCF): 3.60
+PRICES: Gas ($/KCF): 3.6
 PRICES: Natural Gas Liquids ($/BBL): 29.03
 REVENUE: Crude & Condensate: 186308
 REVENUE: Gas: 948351
@@ -197,8 +197,8 @@ OPEX: Processing Fees: -69396
 OPEX: Water Disposal: -20811
 OPEX: Taxes: -110748
 OPEX: Wellwork: -104433
-TOTAL CASH OPEX: -467371
-NET TO WI: 597380
+TOTAL CASH OPEX: -467370.9
+NET TO WI: 597380.1
 TOTAL INVESTMENT: 220879
 
 Period: 2023 Q4
@@ -226,8 +226,8 @@ OPEX: Processing Fees: -43489
 OPEX: Water Disposal: -38320
 OPEX: Taxes: -117889
 OPEX: Wellwork: -13151
-TOTAL CASH OPEX: -407291
-NET TO WI: 647432
+TOTAL CASH OPEX: -407291.44
+NET TO WI: 647431.56
 TOTAL INVESTMENT: 654409
 
 Period: 2024 Q1
@@ -255,8 +255,8 @@ OPEX: Processing Fees: -65847
 OPEX: Water Disposal: -34048
 OPEX: Taxes: -125149
 OPEX: Wellwork: -870
-TOTAL CASH OPEX: -378844
-NET TO WI: 809220
+TOTAL CASH OPEX: -378843.59
+NET TO WI: 809220.41
 TOTAL INVESTMENT: 105017
 
 Period: 2024 Q2
@@ -283,9 +283,9 @@ OPEX: Other Non-Op: -74618
 OPEX: Processing Fees: -71476
 OPEX: Water Disposal: -28632
 OPEX: Taxes: -64477
-OPEX: Wellwork: 0
-TOTAL CASH OPEX: -288159
-NET TO WI: 393202
+OPEX: Wellwork: 
+TOTAL CASH OPEX: -288159.31
+NET TO WI: 393201.69
 TOTAL INVESTMENT: 59003
 
 Period: 2024 Q3
@@ -312,7 +312,7 @@ OPEX: Other Non-Op: -83674
 OPEX: Processing Fees: -75708
 OPEX: Water Disposal: -37896
 OPEX: Taxes: -43349
-OPEX: Wellwork: 0
+OPEX: Wellwork: 
 TOTAL CASH OPEX: -307117
 NET TO WI: 157421
 TOTAL INVESTMENT: 38520
@@ -341,9 +341,9 @@ OPEX: Other Non-Op: -84949
 OPEX: Processing Fees: -43889
 OPEX: Water Disposal: -51590
 OPEX: Taxes: -85849
-OPEX: Wellwork: 0
-TOTAL CASH OPEX: -371840
-NET TO WI: 377842
+OPEX: Wellwork: 
+TOTAL CASH OPEX: -371840.48
+NET TO WI: 377841.52
 TOTAL INVESTMENT: 29583
 
 Period: 2025 Q1
@@ -370,7 +370,7 @@ OPEX: Other Non-Op: -73768
 OPEX: Processing Fees: -55498
 OPEX: Water Disposal: -50254
 OPEX: Taxes: -113169
-OPEX: Wellwork: 0
-TOTAL CASH OPEX: -353538
-NET TO WI: 696481
+OPEX: Wellwork: 
+TOTAL CASH OPEX: -353538.05
+NET TO WI: 696480.95
 TOTAL INVESTMENT: 74
