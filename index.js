@@ -21,7 +21,7 @@ You will output the data in a format that is easiest for LLMs to understand.
 For example let's say have a table like:
 
 | name  | age | favorite color |
-| ----- | —-- | —------------- |
+| ----- | --- | -------------- |
 | Steve | 56  | red            |
 | Ava   | 1   | pink           |
 | Donna | 50  | purple         |
@@ -79,6 +79,9 @@ function formatAsRecords(jsonData) {
  * @param {number} [options.fontSize=8] - Font size for image generation
  * @param {number} [options.cellPadding=2] - Cell padding for image generation
  * @param {boolean} [options.fullPage=true] - Whether to capture full page for image
+ * @param {boolean} [options.sendImage=true] - Whether to include visual image in analysis
+ * @param {boolean} [options.sendCSV=true] - Whether to include CSV data in analysis
+ * @param {boolean} [options.sendJSON=true] - Whether to include JSON record data in analysis
  * @param {string} [options.systemPrompt] - Custom system prompt for LLM analysis
  * @param {string} [options.geminiApiKey] - Gemini API key (if not in environment)
  * @param {string} [options.model="gemini-2.5-pro"] - Google AI model to use for analysis
@@ -93,6 +96,9 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
     fontSize = 8,
     cellPadding = 2,
     fullPage = true,
+    sendImage = true,
+    sendCSV = true,
+    sendJSON = true,
     systemPrompt = DEFAULT_SYSTEM_PROMPT,
     geminiApiKey = process.env.GEMINI_API_KEY,
     model = "gemini-2.5-pro",
@@ -122,49 +128,83 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
       defval: "", // Default value for empty cells
     });
 
-    // Create temporary image for LLM analysis
-    const tempImagePath = path.join(
-      path.dirname(outputPath),
-      `temp-${Date.now()}.png`
-    );
+    let imagePath;
+    let myfile;
 
-    console.log("🖼️  Converting XLSX to image...");
-    const imagePath = await createImageFromXlsx(xlsxPath, tempImagePath, {
-      maxRows,
-      maxCols,
-      fontSize,
-      cellPadding,
-      viewportWidth,
-      viewportHeight,
-      fullPage,
-    });
+    // Create temporary image for LLM analysis if sendImage is true
+    if (sendImage) {
+      const tempImagePath = path.join(
+        path.dirname(outputPath),
+        `temp-${Date.now()}.png`
+      );
+
+      console.log("🖼️  Converting XLSX to image...");
+      imagePath = await createImageFromXlsx(xlsxPath, tempImagePath, {
+        maxRows,
+        maxCols,
+        fontSize,
+        cellPadding,
+        viewportWidth,
+        viewportHeight,
+        fullPage,
+      });
+
+      // Upload the image file
+      myfile = await ai.files.upload({
+        file: path.resolve(imagePath),
+        config: { mimeType: "image/png" },
+      });
+    }
 
     console.log("🤖 Sending data to Gemini for analysis...");
 
-    // Upload the image file
-    const myfile = await ai.files.upload({
-      file: path.resolve(imagePath),
-      config: { mimeType: "image/png" },
-    });
+    // Build content parts array
+    const contentParts = [];
+    const textContentSections = [];
 
-    // Format the data as records for better LLM understanding
-    const recordFormattedData = formatAsRecords(jsonData);
+    // Add image if enabled
+    if (sendImage && myfile) {
+      contentParts.push({
+        fileData: { mimeType: myfile.mimeType, fileUri: myfile.uri },
+      });
+    }
 
-    // Create the content for Gemini
-    const textContent = [
-      "**SPREADSHEET DATA (Record Format):**\n" + recordFormattedData,
-      "\n\n**CSV DATA:**\n" + csvData,
-      "\n\n**REQUEST:**\nPlease analyze this spreadsheet data in all its forms (visual image, structured records, and raw CSV). Provide insights about:\n1. The structure and content of the data\n2. Any patterns or relationships you notice\n3. Data quality observations\n4. Key insights or summaries\n5. Any recommendations for data processing or analysis",
-    ].join("");
+    // Add JSON record data if enabled
+    if (sendJSON) {
+      const recordFormattedData = formatAsRecords(jsonData);
+      textContentSections.push(
+        "**SPREADSHEET DATA (Record Format):**\n" + recordFormattedData
+      );
+    }
+
+    // Add CSV data if enabled
+    if (sendCSV) {
+      textContentSections.push("**CSV DATA:**\n" + csvData);
+    }
+
+    // Build the text content
+    const dataTypes = [];
+    if (sendImage) dataTypes.push("visual image");
+    if (sendJSON) dataTypes.push("structured records");
+    if (sendCSV) dataTypes.push("raw CSV");
+
+    const dataTypesText =
+      dataTypes.length > 0
+        ? `in all its forms (${dataTypes.join(", ")})`
+        : "from the provided data";
+
+    textContentSections.push(
+      `\n\n**REQUEST:**\nPlease analyze this spreadsheet data ${dataTypesText}. Provide insights about:\n1. The structure and content of the data\n2. Any patterns or relationships you notice\n3. Data quality observations\n4. Key insights or summaries\n5. Any recommendations for data processing or analysis`
+    );
+
+    const textContent = textContentSections.join("\n\n");
+    contentParts.push({ text: textContent });
 
     const result = await ai.models.generateContent({
       model: model,
       contents: [
         {
-          parts: [
-            { fileData: { mimeType: myfile.mimeType, fileUri: myfile.uri } },
-            { text: textContent },
-          ],
+          parts: contentParts,
         },
       ],
       config: {
@@ -178,13 +218,15 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
     // Save the analysis to the output file
     fs.writeFileSync(outputPath, analysisText);
 
-    // Clean up temporary image file
-    try {
-      fs.unlinkSync(imagePath);
-    } catch (cleanupError) {
-      console.warn(
-        `⚠️  Could not clean up temporary image file: ${cleanupError.message}`
-      );
+    // Clean up temporary image file if it was created
+    if (sendImage && imagePath) {
+      try {
+        fs.unlinkSync(imagePath);
+      } catch (cleanupError) {
+        console.warn(
+          `⚠️  Could not clean up temporary image file: ${cleanupError.message}`
+        );
+      }
     }
 
     console.log(`✅ Analysis saved to: ${outputPath}`);
