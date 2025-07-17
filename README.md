@@ -40,6 +40,8 @@ echo "GEMINI_API_KEY=your_api_key_here" > .env
 
 Or pass the API key directly in the options.
 
+> **Note**: While any Gemini model can be used, this author has only had success with `gemini-2.5-pro`.
+
 ## How It Works
 
 The package converts traditional spreadsheet data like this:

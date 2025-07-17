@@ -81,6 +81,7 @@ function formatAsRecords(jsonData) {
  * @param {boolean} [options.fullPage=true] - Whether to capture full page for image
  * @param {string} [options.systemPrompt] - Custom system prompt for LLM analysis
  * @param {string} [options.geminiApiKey] - Gemini API key (if not in environment)
+ * @param {string} [options.model="gemini-2.5-pro"] - Google AI model to use for analysis
  * @returns {Promise<string>} The analysis result text
  */
 async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
@@ -94,6 +95,7 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
     fullPage = true,
     systemPrompt = DEFAULT_SYSTEM_PROMPT,
     geminiApiKey = process.env.GEMINI_API_KEY,
+    model = "gemini-2.5-pro",
   } = options;
 
   if (!geminiApiKey) {
@@ -156,7 +158,7 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
     ].join("");
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: model,
       contents: [
         {
           parts: [

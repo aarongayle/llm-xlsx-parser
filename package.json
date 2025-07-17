@@ -11,7 +11,10 @@
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:validate": "node test/validate-specific-values.js",
+    "test:demo": "node test/demo.js",
     "example": "node example.js"
   },
   "keywords": [
@@ -34,5 +37,8 @@
     "dotenv": "^17.2.0",
     "playwright": "^1.40.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1"
   }
 }
