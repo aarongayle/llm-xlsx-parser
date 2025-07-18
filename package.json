@@ -36,6 +36,7 @@
     "@google/genai": "^1.10.0",
     "canvas": "^2.11.2",
     "dotenv": "^17.2.0",
+    "exceljs": "^4.4.0",
     "playwright": "^1.40.0",
     "xlsx": "^0.18.5"
   },

@@ -82,10 +82,11 @@ function formatAsRecords(jsonData) {
  * @param {boolean} [options.sendImage=true] - Whether to include visual image in analysis
  * @param {boolean} [options.sendCSV=true] - Whether to include CSV data in analysis
  * @param {boolean} [options.sendJSON=true] - Whether to include JSON record data in analysis
+ * @param {boolean} [options.outputImage=false] - Whether to output image as primary result (skips LLM analysis)
  * @param {string} [options.systemPrompt] - Custom system prompt for LLM analysis
  * @param {string} [options.geminiApiKey] - Gemini API key (if not in environment)
  * @param {string} [options.model="gemini-2.5-pro"] - Google AI model to use for analysis
- * @returns {Promise<string>} The analysis result text
+ * @returns {Promise<string>} The analysis result text or image path
  */
 async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
   const {
@@ -99,25 +100,44 @@ async function analyzeXlsx(xlsxPath, outputPath, options = {}) {
     sendImage = true,
     sendCSV = true,
     sendJSON = true,
+    outputImage = false,
     systemPrompt = DEFAULT_SYSTEM_PROMPT,
     geminiApiKey = process.env.GEMINI_API_KEY,
     model = "gemini-2.5-pro",
   } = options;
 
-  if (!geminiApiKey) {
+  // If outputImage is true, we don't need Gemini API key
+  if (!outputImage && !geminiApiKey) {
     throw new Error(
       "Gemini API key is required. Set GEMINI_API_KEY environment variable or pass it in options."
     );
   }
 
-  // Initialize Gemini AI
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+  // Initialize Gemini AI only if we're not just outputting an image
+  const ai = !outputImage ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
   try {
     // Read the Excel file
     const workbook = read(fs.readFileSync(xlsxPath));
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
+
+    // If outputImage is true, create and save the image as primary output
+    if (outputImage) {
+      console.log("🖼️  Converting XLSX to image...");
+      const imagePath = await createImageFromXlsx(xlsxPath, outputPath, {
+        maxRows,
+        maxCols,
+        fontSize,
+        cellPadding,
+        viewportWidth,
+        viewportHeight,
+        fullPage,
+      });
+
+      console.log(`✅ Image saved to: ${outputPath}`);
+      return imagePath;
+    }
 
     // Convert to CSV format
     const csvData = utils.sheet_to_csv(worksheet);

@@ -89,6 +89,27 @@ const result = await parseXlsx(
 console.log(result); // LLM-formatted data
 ```
 
+### Image Output Mode
+
+```javascript
+import parseXlsx from "llm-xlsx-parser";
+
+// Generate only an image (no LLM processing)
+const imagePath = await parseXlsx(
+  "data/spreadsheet.xlsx",
+  "output/spreadsheet-image.png",
+  {
+    outputImage: true, // Enable image output mode
+    maxRows: 100,
+    maxCols: 50,
+    fontSize: 12,
+    cellPadding: 4,
+  }
+);
+
+console.log(`Image saved to: ${imagePath}`);
+```
+
 ### Advanced Usage with Options
 
 ```javascript
@@ -105,6 +126,7 @@ const result = await parseXlsx(
     fontSize: 10, // Font size for image generation
     cellPadding: 4, // Cell padding for image generation
     fullPage: true, // Capture full page screenshot
+    outputImage: false, // Set to true for image output mode
     geminiApiKey: "your-key", // API key (if not in environment)
     systemPrompt: "Custom formatting prompt...", // Custom system prompt
   }
@@ -134,12 +156,13 @@ Converts an XLSX file into LLM-friendly formats.
 | `fontSize`       | number  | `8`                          | Font size for image generation                  |
 | `cellPadding`    | number  | `2`                          | Cell padding for image generation               |
 | `fullPage`       | boolean | `true`                       | Whether to capture full page screenshot         |
-| `geminiApiKey`   | string  | `process.env.GEMINI_API_KEY` | Gemini API key                                  |
+| `outputImage`    | boolean | `false`                      | Output image as primary result (skips LLM)      |
+| `geminiApiKey`   | string  | `process.env.GEMINI_API_KEY` | Gemini API key (not needed for image mode)      |
 | `systemPrompt`   | string  | Built-in prompt              | Custom system prompt for formatting             |
 
 #### Returns
 
-- **Promise<string>**: The LLM-formatted data
+- **Promise<string>**: The LLM-formatted data (LLM mode) or image file path (image mode)
 
 #### Throws
 
@@ -166,17 +189,34 @@ echo "GEMINI_API_KEY=your_api_key_here" > .env
 npm run example
 ```
 
-## Output Formats
+## Output Modes
 
-The package provides data in three formats:
+The package supports two primary output modes:
 
-1. **📋 Structured Records**: Key-value pairs for each row (primary format)
-2. **📊 CSV Data**: Traditional comma-separated values
-3. **🖼️ Visual Image**: Screenshot of the spreadsheet for spatial context
+### 1. **LLM Analysis Mode** (Default)
+
+Processes the spreadsheet through Google Gemini AI and outputs formatted text analysis. This mode provides data in three formats:
+
+- **📋 Structured Records**: Key-value pairs for each row (primary format)
+- **📊 CSV Data**: Traditional comma-separated values
+- **🖼️ Visual Image**: Screenshot of the spreadsheet for spatial context (used internally)
 
 This multi-format approach ensures LLMs can understand both the data content and its spatial relationships.
 
+### 2. **Image Output Mode**
+
+Generates and saves a visual image of the spreadsheet as the primary output. This mode:
+
+- **🖼️ Creates a PNG image** of the spreadsheet data
+- **⚡ Skips LLM processing** for faster execution
+- **💰 No API costs** - doesn't require Gemini API key
+- **🎨 Highly customizable** image generation options
+
+Both modes can be used independently or combined based on your needs.
+
 ## Processing Steps
+
+### LLM Analysis Mode
 
 1. **📖 File Reading**: Reads the XLSX file and extracts data
 2. **🔄 Format Conversion**: Converts data to CSV and structured records
@@ -184,6 +224,13 @@ This multi-format approach ensures LLMs can understand both the data content and
 4. **📤 LLM Processing**: Sends all formats to Gemini for formatting
 5. **📝 Output**: Returns LLM-optimized data format
 6. **🧹 Cleanup**: Removes temporary files
+
+### Image Output Mode
+
+1. **📖 File Reading**: Reads the XLSX file and extracts data
+2. **🖼️ Image Generation**: Creates a visual representation using Playwright
+3. **💾 Save Image**: Saves the image to the specified output path
+4. **📝 Output**: Returns the image file path
 
 ## Why Use Multiple Formats?
 
